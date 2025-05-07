@@ -1,0 +1,27 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node --loader ts-node/esm src/index.ts"
+  },
+  "keywords": [],
+  "author": "Hector Rivas",
+  "license": "MIT",
+  "description": "MediRemind es una aplicación móvil diseñada para mejorar la adherencia al tratamiento médico a través de recordatorios inteligentes impulsados por IA. El proyecto incluye una app desarrollada con React Native (Expo) y un backend en Node.js + Express.",
+  "dependencies": {
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.26.0",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.15.14",
+    "eslint": "^9.26.0",
+    "globals": "^16.0.0",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.32.0"
+  }
+}

@@ -19,12 +19,11 @@ MediRemind es una aplicación móvil diseñada para mejorar la adherencia al tra
 
 ### Frontend (React Native + Expo)
 
-mediremind-app/
+MediRemind/
 ├── app/              # Rutas de navegación con Expo Router  
 ├── components/       # Componentes reutilizables  
 ├── services/         # API y lógica de notificaciones  
 ├── utils/            # Funciones de gamificación, formatos, etc.  
-└── App.tsx
 
 ### Backend (Node.js + Express + MongoDB)
 
@@ -63,32 +62,16 @@ cd MediRemind
 
 ### Backend
 
-cd mediremind-api  
+cd server  
 npm install  
 cp .env.example .env   # Agrega tu URI de MongoDB  
 npm run dev
 
 ### Frontend
 
-cd mediremind-app  
+cd MediRemind 
 npm install  
 npx expo start
-
----
-
-## 📅 Cronograma del MVP
-
-El MVP está diseñado para desarrollarse en 6 semanas con metodología Kanban, incluyendo funcionalidades mínimas como:
-- Registro/login
-- Registro de tratamientos
-- Recordatorios personalizados
-- Seguimiento básico
-
----
-
-## 🤝 Contribuciones
-
-¡Las contribuciones son bienvenidas! Por favor crea un *issue* o abre un *pull request* con mejoras, sugerencias o reportes de bugs.
 
 ---
 
