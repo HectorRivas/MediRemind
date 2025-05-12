@@ -2,12 +2,10 @@
 import React, { useEffect, useRef } from "react";
 import {
   View,
-  Image,
   StyleSheet,
   Animated,
   Easing,
-  Dimensions,
-  Text,
+  Dimensions
 } from "react-native";
 import { router } from "expo-router";
 
@@ -56,7 +54,7 @@ export default function SplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#1D3D47",
+    backgroundColor: "rgba(42, 123, 155, 100)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -67,7 +65,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     fontWeight: "bold",
-    color: "#50B4DE",
+    color: "white",
     marginTop: 10,
   },
 });

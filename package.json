@@ -1,0 +1,11 @@
+{
+  "dependencies": {
+    "expo-linear-gradient": "^14.1.4",
+    "react-native-linear-gradient": "^2.8.3",
+    "victory": "^37.3.6",
+    "victory-native": "^41.17.1"
+  },
+  "devDependencies": {
+    "@types/victory": "^33.1.5"
+  }
+}
