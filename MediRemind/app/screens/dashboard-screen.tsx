@@ -96,21 +96,17 @@ export default function DashboardScreen() {
         <SafeAreaView style={styles.safeArea}>
           <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
             <View style={styles.container}>
-              {/* Sistema de recordatorios de medicación */}
+
               <MedicationReminderSystem />
-              {/* Encabezado con botón de configuración */}
+
               <Header onSettingsPress={openSettingsModal} />
 
-              {/* Tarjeta para mostrar el próximo medicamento */}
               <NextMedicationCard schedule={currentSchedule} />
 
-              {/* Estado de medicamentos tomados y pendientes */}
               <TodayMedicationStatus schedule={currentSchedule} />
 
-              {/* Calendario del historial de medicación */}
               <MedicationHistoryCalendar schedule={currentSchedule} />
 
-              {/* Lista de recordatorios activos */}
               <ActiveRemindersList
                 schedules={currentSchedule ? [currentSchedule] : []}
                 onMarkAsTaken={handleMarkAsTaken}
