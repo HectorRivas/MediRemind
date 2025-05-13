@@ -15,7 +15,7 @@ export default function Header({ onSettingsPress }: { onSettingsPress: () => voi
       </View>
 
       <TouchableOpacity onPress={onSettingsPress}>
-        <Ionicons name="settings-outline" size={24} color="white" />
+        <Ionicons name="add-circle-outline" size={32} color="white" />
       </TouchableOpacity>
     </View>
   );
