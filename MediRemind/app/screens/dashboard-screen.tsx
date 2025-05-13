@@ -97,7 +97,7 @@ export default function DashboardScreen() {
           <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
             <View style={styles.container}>
 
-              <MedicationReminderSystem />
+              <MedicationReminderSystem />.
 
               <Header onSettingsPress={openSettingsModal} />
 
