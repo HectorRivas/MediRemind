@@ -21,14 +21,18 @@ interface NextMedicationCardProps {
 }
 
 export default function NextMedicationCard({ schedule }: NextMedicationCardProps) {
+  // Estado para el progreso del círculo
   const [fill, setFill] = useState(0);
+  // Estado para la próxima dosis
   const [nextTime, setNextTime] = useState({
-    time: '--:--',
-    period: '',
-    nextDose: null as dayjs.Dayjs | null
+    time: '--:--', // Hora de la próxima dosis
+    period: '', // AM o PM
+    nextDose: null as dayjs.Dayjs | null, // Objeto de la próxima dosis
   });
+  // Referencia para el intervalo de actualización
   const intervalRef = useRef<number | null>(null);
 
+  // Calcula la próxima dosis y actualiza el progreso
   const calculateNextDose = useCallback(() => {
     if (!schedule) {
       setNextTime({ time: '--:--', period: '', nextDose: null });
@@ -36,11 +40,11 @@ export default function NextMedicationCard({ schedule }: NextMedicationCardProps
       return;
     }
 
-    const now = dayjs();
-    const hoursInterval = parseInt(schedule.frequency.match(/\d+/)?.[0] ?? '8') || 8;
+    const now = dayjs(); // Hora actual
+    const hoursInterval = parseInt(schedule.frequency.match(/\d+/)?.[0] ?? '8') || 8; // Intervalo en horas
     let nextDose = dayjs(schedule.startDate);
 
-    // Calcular próxima dosis no tomada
+    // Encuentra la próxima dosis no tomada
     while (nextDose.isBefore(now)) {
       const wasTaken = schedule.takenTimes.some(
         t => dayjs(t).isSame(nextDose, 'hour')
@@ -49,50 +53,57 @@ export default function NextMedicationCard({ schedule }: NextMedicationCardProps
       nextDose = nextDose.add(hoursInterval, 'hour');
     }
 
-    // Calcular dosis anterior para el progreso
+    // Calcula la dosis anterior para determinar el progreso
     let prevDose = nextDose.subtract(hoursInterval, 'hour');
     if (prevDose.isBefore(dayjs(schedule.startDate))) {
       prevDose = dayjs(schedule.startDate);
     }
 
-    // Formatear hora
-    const displayHour = nextDose.hour() % 12 || 12;
+    // Formatea la hora de la próxima dosis
+    const displayHour = nextDose.hour() % 12 || 12; // Convierte a formato de 12 horas
     const period = nextDose.hour() >= 12 ? 'PM' : 'AM';
 
     setNextTime({
       time: `${displayHour}:${nextDose.minute().toString().padStart(2, '0')}`,
       period,
-      nextDose
+      nextDose,
     });
 
-    // Calcular progreso
-    const totalMillis = nextDose.diff(prevDose);
-    const elapsedMillis = now.diff(prevDose);
+    // Calcula el porcentaje de progreso
+    const totalMillis = nextDose.diff(prevDose); // Tiempo total entre dosis
+    const elapsedMillis = now.diff(prevDose); // Tiempo transcurrido desde la dosis anterior
     const percent = (elapsedMillis / totalMillis) * 100;
 
-    setFill(Math.min(Math.max(percent, 0), 100));
+    setFill(Math.min(Math.max(percent, 0), 100)); // Asegura que el porcentaje esté entre 0 y 100
   }, [schedule]);
 
+  // Configura un intervalo para actualizar el progreso cada minuto
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     calculateNextDose();
-    intervalRef.current = setInterval(calculateNextDose, 60000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    intervalRef.current = setInterval(calculateNextDose, 60000); // Actualiza cada 60 segundos
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
   }, [calculateNextDose]);
 
   return (
     <View style={[styles.card, global.isDarkMode && { backgroundColor: '#1F2937' }]}>
+      {/* Encabezado del próximo medicamento */}
       <View style={styles.nextMedicationHeader}>
         <Text style={[styles.nextMedicationText, global.isDarkMode && { color: '#F9FAFB' }]}>
           Próximo Medicamento
         </Text>
       </View>
+
+      {/* Contenedor de información del medicamento */}
       <View style={styles.medicationInfoContainer}>
+        {/* Círculo de progreso animado */}
         <AnimatedCircularProgress
           size={70}
           width={6}
           fill={fill}
-          tintColor={fill >= 100 ? '#EF4444' : '#22d3ee'}
+          tintColor={fill >= 100 ? '#EF4444' : '#22d3ee'} // Rojo si está atrasado
           backgroundColor="#e2e8f0"
           rotation={0}
           lineCap="round"
@@ -109,6 +120,7 @@ export default function NextMedicationCard({ schedule }: NextMedicationCardProps
           )}
         </AnimatedCircularProgress>
 
+        {/* Detalles del medicamento */}
         <View style={styles.detailsContainer}>
           <Text style={[styles.medicationName, global.isDarkMode && { color: '#F9FAFB' }]}>
             {schedule?.name || 'No hay medicación'}
@@ -117,13 +129,16 @@ export default function NextMedicationCard({ schedule }: NextMedicationCardProps
             {schedule?.dosage || 'Agrega un recordatorio'}
           </Text>
 
+          {/* Barra de progreso */}
           <View style={[styles.progressBarBackground, global.isDarkMode && { backgroundColor: '#374151' }]}>
             <View style={[
               styles.progressBarFill,
               { width: `${fill}%` },
-              fill >= 100 && styles.progressBarFillLate
+              fill >= 100 && styles.progressBarFillLate,
             ]} />
           </View>
+
+          {/* Frecuencia del medicamento */}
           {schedule && (
             <Text style={styles.frequencyText}>
               Cada {schedule.frequency}
@@ -135,6 +150,7 @@ export default function NextMedicationCard({ schedule }: NextMedicationCardProps
   );
 }
 
+// Estilos del componente
 const styles = StyleSheet.create({
   card: {
     backgroundColor: 'white',
@@ -175,7 +191,7 @@ const styles = StyleSheet.create({
     color: '#06b6d4',
   },
   timeTextLate: {
-    color: '#EF4444', // Rojo cuando pasó la hora
+    color: '#EF4444', // Rojo si está atrasado
   },
   amPmText: {
     fontSize: 12,
@@ -207,7 +223,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   progressBarFillLate: {
-    backgroundColor: '#EF4444', // Rojo cuando pasó la hora
+    backgroundColor: '#EF4444', // Rojo si está atrasado
   },
   frequencyText: {
     fontSize: 12,

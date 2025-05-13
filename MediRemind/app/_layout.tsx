@@ -9,7 +9,10 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StyleSheet } from 'react-native';
 
 export default function RootLayout() {
+  // Detecta el esquema de color actual (claro u oscuro)
   const colorScheme = useColorScheme();
+
+  // Carga las fuentes personalizadas
   const [loaded] = useFonts({
     "SpaceMono": require('../assets/fonts/SpaceMono-Regular.ttf'),
     "CascadiaMono-Bold": require('../assets/fonts/CascadiaMono-Bold.ttf'),
@@ -32,21 +35,26 @@ export default function RootLayout() {
     "Sansation-Italic": require('../assets/fonts/Sansation-Italic.ttf'),
   });
 
+  // Cambia el color de fondo de la barra de navegación
   useEffect(() => {
-    NavigationBar.setBackgroundColorAsync('#ADD8E6');
+    NavigationBar.setBackgroundColorAsync('#ADD8E6'); // Azul claro
   }, []);
 
+  // Si las fuentes no están cargadas, no renderiza nada
   if (!loaded) return null;
 
   return (
     <GestureHandlerRootView style={styles.container}>
+      {/* Proveedor de tema para manejar esquemas de color */}
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        {/* Configuración de navegación con pilas */}
         <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="dashboard" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="+not-found" />
+          <Stack.Screen name="index" /> {/* Pantalla principal */}
+          <Stack.Screen name="dashboard" /> {/* Pantalla del tablero */}
+          <Stack.Screen name="(tabs)" /> {/* Pantalla de pestañas */}
+          <Stack.Screen name="+not-found" /> {/* Pantalla de error 404 */}
         </Stack>
+        {/* Barra de estado con estilo según el esquema de color */}
         <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       </ThemeProvider>
     </GestureHandlerRootView>
@@ -55,6 +63,6 @@ export default function RootLayout() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
+    flex: 1, // Ocupa todo el espacio disponible
   },
 });

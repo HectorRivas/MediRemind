@@ -21,13 +21,14 @@ interface ActiveRemindersListProps {
   onMarkAsTaken?: (scheduleId: string, time: Date) => void;
 }
 
+// Función para calcular las próximas dosis de un medicamento
 const calculateNextDoses = (schedule: MedicationSchedule) => {
   const now = dayjs();
   const hoursInterval = parseInt(schedule.frequency.match(/\d+/)?.[0] ?? '8');
   let nextDose = dayjs(schedule.startDate);
   const nextDoses: dayjs.Dayjs[] = [];
 
-  // Encontrar la próxima dosis no tomada
+  // Encuentra las próximas 3 dosis no tomadas
   while (nextDoses.length < 3) {
     const wasTaken = schedule.takenTimes.some(t =>
       dayjs(t).isSame(nextDose, 'hour')
@@ -47,6 +48,7 @@ export default function ActiveRemindersList({
   schedules = [],
   onMarkAsTaken
 }: ActiveRemindersListProps) {
+  // Procesa los horarios para calcular las próximas dosis y su estado
   const processedSchedules = useMemo(() => {
     return schedules.map(schedule => {
       const nextDoses = calculateNextDoses(schedule);
@@ -66,16 +68,19 @@ export default function ActiveRemindersList({
     });
   }, [schedules]);
 
+  // Maneja la acción de marcar un medicamento como tomado
   const handleMarkAsTaken = (scheduleId: string, doseTime: Date) => {
     onMarkAsTaken?.(scheduleId, doseTime);
   };
 
   return (
     <View style={[styles.container]}>
+      {/* Título de la lista */}
       <Text style={[styles.title, global.isDarkMode && styles.titleDark]}>
         Medicamentos Activos
       </Text>
 
+      {/* Si no hay medicamentos activos */}
       {processedSchedules.length === 0 ? (
         <View style={[styles.emptyCard, global.isDarkMode && styles.emptyCardDark]}>
           <Text style={[styles.emptyText, global.isDarkMode && styles.emptyTextDark]}>
@@ -83,8 +88,10 @@ export default function ActiveRemindersList({
           </Text>
         </View>
       ) : (
+        // Lista de medicamentos activos
         processedSchedules.map((schedule) => (
           <View key={schedule.id} style={[styles.card, global.isDarkMode && styles.cardDark]}>
+            {/* Icono de estado del medicamento */}
             <Ionicons
               name={schedule.status === 'tomado' ? 'checkmark-circle' :
                 schedule.status === 'vencido' ? 'alert-circle' : 'time'}
@@ -93,6 +100,7 @@ export default function ActiveRemindersList({
                 schedule.status === 'vencido' ? '#EF4444' : '#FACC15'}
             />
 
+            {/* Información del medicamento */}
             <View style={styles.info}>
               <Text style={[styles.name, global.isDarkMode && styles.nameDark]}>
                 {schedule.name} - {schedule.dosage}
@@ -109,6 +117,7 @@ export default function ActiveRemindersList({
               </Text>
             </View>
 
+            {/* Botón para marcar como tomado */}
             <TouchableOpacity
               onPress={() => handleMarkAsTaken(schedule.id, schedule.nextDoses[0].toDate())}
               style={[
@@ -130,7 +139,7 @@ export default function ActiveRemindersList({
   );
 }
 
-// Estilos actualizados
+// Estilos para la lista de recordatorios activos
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 16,

@@ -8,6 +8,7 @@ import MedicationHistoryCalendar from "@/components/MedicationHistoryCalendar";
 import ActiveRemindersList from "@/components/ActiveRemindersList";
 import MedicationReminderSystem from '@/components/MedicationReminderSystem';
 
+// Interfaz para definir la estructura de un recordatorio de medicación
 interface MedicationSchedule {
   id: string;
   name: string;
@@ -18,22 +19,27 @@ interface MedicationSchedule {
 }
 
 export default function DashboardScreen() {
+  // Estados para manejar el modal, texto de entrada, recordatorio actual, carga y errores
   const [modalVisible, setModalVisible] = useState(false);
   const [inputText, setInputText] = useState('');
   const [currentSchedule, setCurrentSchedule] = useState<MedicationSchedule | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Funciones para abrir y cerrar el modal
   const openSettingsModal = useCallback(() => setModalVisible(true), []);
   const closeSettingsModal = useCallback(() => setModalVisible(false), []);
 
+  // Manejar cambios en el texto de entrada
   const handleTextInput = (text: string) => setInputText(text);
 
+  // Función para generar un recordatorio asistido por IA
   const handleGenerateReminder = async () => {
     setLoading(true);
     setError(null);
 
     try {
+      // Llamada a la API para generar el recordatorio
       const response = await fetch('http://192.168.100.81:3000/generate-reminder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -45,13 +51,13 @@ export default function DashboardScreen() {
       if (response.ok && data.success) {
         const reminderText = data.reminder || '';
 
-        // Extraer datos del recordatorio
+        // Extraer datos del recordatorio generado
         const medicamento = /Medicamento:\s*(.*)/i.exec(reminderText)?.[1]?.trim() || 'Sin nombre';
         const dosis = /Dosis:\s*(.*)/i.exec(reminderText)?.[1]?.trim() || 'Sin dosis especificada';
         const frecuencia = /Frecuencia:\s*(.*)/i.exec(reminderText)?.[1]?.trim() || 'Sin frecuencia';
         const duracion = /Duración:\s*(.*)/i.exec(reminderText)?.[1]?.trim() || 'Sin duración';
 
-        // Crear nuevo schedule
+        // Crear un nuevo recordatorio
         const newSchedule: MedicationSchedule = {
           id: Date.now().toString(),
           name: medicamento,
@@ -74,6 +80,7 @@ export default function DashboardScreen() {
     setModalVisible(false);
   };
 
+  // Función para marcar una dosis como tomada
   const handleMarkAsTaken = (scheduleId: string, time: Date) => {
     if (!currentSchedule) return;
 
@@ -89,16 +96,21 @@ export default function DashboardScreen() {
         <SafeAreaView style={styles.safeArea}>
           <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
             <View style={styles.container}>
+              {/* Sistema de recordatorios de medicación */}
               <MedicationReminderSystem />
+              {/* Encabezado con botón de configuración */}
               <Header onSettingsPress={openSettingsModal} />
 
-              {/* Componentes integrados con el schedule */}
+              {/* Tarjeta para mostrar el próximo medicamento */}
               <NextMedicationCard schedule={currentSchedule} />
 
+              {/* Estado de medicamentos tomados y pendientes */}
               <TodayMedicationStatus schedule={currentSchedule} />
 
+              {/* Calendario del historial de medicación */}
               <MedicationHistoryCalendar schedule={currentSchedule} />
 
+              {/* Lista de recordatorios activos */}
               <ActiveRemindersList
                 schedules={currentSchedule ? [currentSchedule] : []}
                 onMarkAsTaken={handleMarkAsTaken}
@@ -106,7 +118,7 @@ export default function DashboardScreen() {
             </View>
           </ScrollView>
 
-          {/* Modal para agregar recordatorio */}
+          {/* Modal para agregar un nuevo recordatorio */}
           <Modal
             visible={modalVisible}
             animationType="slide"

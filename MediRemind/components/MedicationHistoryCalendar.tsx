@@ -21,8 +21,11 @@ interface MedicationHistoryCalendarProps {
 }
 
 export default function MedicationHistoryCalendar({ schedule }: MedicationHistoryCalendarProps) {
+  // Estado para la fecha actual y la fecha seleccionada
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [selectedDate, setSelectedDate] = useState(dayjs());
+
+  // Estado para almacenar los días de la semana con información adicional
   const [days, setDays] = useState<{
     date: Date;
     dayNumber: number;
@@ -34,71 +37,76 @@ export default function MedicationHistoryCalendar({ schedule }: MedicationHistor
     dosesTaken: number;
   }[]>([]);
 
-  // Calcular días completados basados en el schedule
+  // Calcula los días completados basados en el horario de medicamentos
   useEffect(() => {
     if (!schedule) return;
 
-    const startOfWeek = currentDate.startOf('week');
+    const startOfWeek = currentDate.startOf('week'); // Inicio de la semana actual
     const daysArray = [];
 
     for (let i = 0; i < 7; i++) {
-      const day = startOfWeek.add(i, 'day');
+      const day = startOfWeek.add(i, 'day'); // Calcula cada día de la semana
       const dayDate = day.toDate();
       const dayNumber = day.date();
-      const isToday = day.isSame(dayjs(), 'day');
-      const isSelected = day.isSame(selectedDate, 'day');
+      const isToday = day.isSame(dayjs(), 'day'); // Verifica si es el día actual
+      const isSelected = day.isSame(selectedDate, 'day'); // Verifica si es el día seleccionado
 
-      // Calcular cuántas dosis se tomaron este día
+      // Calcula cuántas dosis se tomaron en este día
       const dosesTaken = schedule.takenTimes.filter(takenTime =>
         dayjs(takenTime).isSame(day, 'day')
       ).length;
 
-      // Considerar completado si se tomó al menos una dosis
+      // Marca el día como completado si se tomó al menos una dosis
       const isCompleted = dosesTaken > 0;
 
       daysArray.push({
         date: dayDate,
         dayNumber,
-        dayName: day.format('dd')[0],
+        dayName: day.format('dd')[0], // Obtiene la primera letra del día
         isCurrentMonth: day.month() === currentDate.month(),
         isToday,
         isSelected,
         isCompleted,
-        dosesTaken
+        dosesTaken,
       });
     }
 
-    setDays(daysArray);
+    setDays(daysArray); // Actualiza el estado con los días calculados
   }, [currentDate, selectedDate, schedule]);
 
+  // Maneja la selección de un día
   const handleDayPress = (date: Date) => {
     setSelectedDate(dayjs(date));
   };
 
+  // Navega a la semana anterior
   const handlePrevWeek = () => {
     setCurrentDate(currentDate.subtract(1, 'week'));
   };
 
+  // Navega a la semana siguiente
   const handleNextWeek = () => {
     setCurrentDate(currentDate.add(1, 'week'));
   };
 
   return (
     <View style={[styles.card, global.isDarkMode && styles.cardDark]}>
+      {/* Encabezado con el mes y año actual */}
       <View style={styles.header}>
         <Text style={[styles.title, global.isDarkMode && styles.titleDark]}>
           {currentDate.format('MMMM YYYY')}
         </Text>
         <View style={styles.navigation}>
           <TouchableOpacity onPress={handlePrevWeek}>
-            <Text style={styles.navButton}>‹</Text>
+            <Text style={styles.navButton}>‹</Text> {/* Botón para semana anterior */}
           </TouchableOpacity>
           <TouchableOpacity onPress={handleNextWeek}>
-            <Text style={styles.navButton}>›</Text>
+            <Text style={styles.navButton}>›</Text> {/* Botón para semana siguiente */}
           </TouchableOpacity>
         </View>
       </View>
 
+      {/* Etiquetas de los días de la semana */}
       <View style={styles.weekContainer}>
         {days.map((day, index) => (
           <Text
@@ -110,6 +118,7 @@ export default function MedicationHistoryCalendar({ schedule }: MedicationHistor
         ))}
       </View>
 
+      {/* Números de los días con información adicional */}
       <View style={styles.dayNumbersContainer}>
         {days.map((day, index) => (
           <TouchableOpacity
@@ -155,7 +164,7 @@ export default function MedicationHistoryCalendar({ schedule }: MedicationHistor
   );
 }
 
-// Estilos actualizados
+// Estilos para el componente
 const styles = StyleSheet.create({
   card: {
     marginHorizontal: 16,
