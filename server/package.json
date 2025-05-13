@@ -12,6 +12,7 @@
   "license": "MIT",
   "description": "MediRemind es una aplicación móvil diseñada para mejorar la adherencia al tratamiento médico a través de recordatorios inteligentes impulsados por IA. El proyecto incluye una app desarrollada con React Native (Expo) y un backend en Node.js + Express.",
   "dependencies": {
+    "@google/genai": "^0.13.0",
     "axios": "^1.9.0",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",

@@ -1,69 +1,136 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import dayjs from 'dayjs';
 
 declare global {
   var isDarkMode: boolean;
 }
 
-const reminders = [
-  {
-    id: '1',
-    name: 'Paracetamol',
-    time: '9:00 AM',
-    status: 'tomado',
-  },
-  {
-    id: '2',
-    name: 'Ibuprofeno',
-    time: '2:00 PM',
-    status: 'pendiente',
-  },
-];
+interface MedicationSchedule {
+  id: string;
+  name: string;
+  dosage: string;
+  frequency: string;
+  startDate: Date;
+  takenTimes: Date[];
+}
 
-export default function ActiveRemindersList() {
+interface ActiveRemindersListProps {
+  schedules?: MedicationSchedule[];
+  onMarkAsTaken?: (scheduleId: string, time: Date) => void;
+}
+
+const calculateNextDoses = (schedule: MedicationSchedule) => {
+  const now = dayjs();
+  const hoursInterval = parseInt(schedule.frequency.match(/\d+/)?.[0] ?? '8');
+  let nextDose = dayjs(schedule.startDate);
+  const nextDoses: dayjs.Dayjs[] = [];
+
+  // Encontrar la próxima dosis no tomada
+  while (nextDoses.length < 3) {
+    const wasTaken = schedule.takenTimes.some(t =>
+      dayjs(t).isSame(nextDose, 'hour')
+    );
+
+    if (!wasTaken && nextDose.isAfter(now.subtract(1, 'hour'))) {
+      nextDoses.push(nextDose);
+    }
+
+    nextDose = nextDose.add(hoursInterval, 'hour');
+  }
+
+  return nextDoses;
+};
+
+export default function ActiveRemindersList({
+  schedules = [],
+  onMarkAsTaken
+}: ActiveRemindersListProps) {
+  const processedSchedules = useMemo(() => {
+    return schedules.map(schedule => {
+      const nextDoses = calculateNextDoses(schedule);
+      const formattedTimes = nextDoses.map(dose => {
+        const displayHour = dose.hour() % 12 || 12;
+        const period = dose.hour() >= 12 ? 'PM' : 'AM';
+        return `${displayHour}:${dose.minute().toString().padStart(2, '0')} ${period}`;
+      });
+
+      return {
+        ...schedule,
+        nextDoses,
+        formattedTimes,
+        status: nextDoses[0] && dayjs().isAfter(nextDoses[0]) ? 'vencido' :
+          schedule.takenTimes.length > 0 ? 'tomado' : 'pendiente'
+      };
+    });
+  }, [schedules]);
+
+  const handleMarkAsTaken = (scheduleId: string, doseTime: Date) => {
+    onMarkAsTaken?.(scheduleId, doseTime);
+  };
+
   return (
     <View style={[styles.container]}>
       <Text style={[styles.title, global.isDarkMode && styles.titleDark]}>
-        Medicamentos de Hoy
+        Medicamentos Activos
       </Text>
 
-      {reminders.map((item) => (
-        <View
-          key={item.id}
-          style={[styles.card, global.isDarkMode && styles.cardDark]}
-        >
-          <Ionicons
-            name={item.status === 'tomado' ? 'checkmark-circle' : 'time'}
-            size={24}
-            color={item.status === 'tomado' ? '#22C55E' : '#FACC15'}
-          />
-          <View style={styles.info}>
-            <Text
-              style={[styles.name, global.isDarkMode && styles.nameDark]}
-            >
-              {item.name}
-            </Text>
-            <Text style={[styles.time, global.isDarkMode && styles.timeDark]}>
-              {item.time}
-            </Text>
-          </View>
-          <Text
-            style={[
-              styles.status,
-              item.status === 'tomado'
-                ? styles.statusTaken
-                : styles.statusPending,
-            ]}
-          >
-            {item.status}
+      {processedSchedules.length === 0 ? (
+        <View style={[styles.emptyCard, global.isDarkMode && styles.emptyCardDark]}>
+          <Text style={[styles.emptyText, global.isDarkMode && styles.emptyTextDark]}>
+            No hay medicamentos activos
           </Text>
         </View>
-      ))}
+      ) : (
+        processedSchedules.map((schedule) => (
+          <View key={schedule.id} style={[styles.card, global.isDarkMode && styles.cardDark]}>
+            <Ionicons
+              name={schedule.status === 'tomado' ? 'checkmark-circle' :
+                schedule.status === 'vencido' ? 'alert-circle' : 'time'}
+              size={24}
+              color={schedule.status === 'tomado' ? '#22C55E' :
+                schedule.status === 'vencido' ? '#EF4444' : '#FACC15'}
+            />
+
+            <View style={styles.info}>
+              <Text style={[styles.name, global.isDarkMode && styles.nameDark]}>
+                {schedule.name} - {schedule.dosage}
+              </Text>
+              <Text style={[
+                styles.time,
+                global.isDarkMode && styles.timeDark,
+                schedule.status === 'vencido' && styles.timeLate
+              ]}>
+                Próxima: {schedule.formattedTimes[0] || '--:-- --'}
+              </Text>
+              <Text style={[styles.time, global.isDarkMode && styles.timeDark]}>
+                Siguientes: {schedule.formattedTimes.slice(1).join(', ') || 'Ninguna'}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              onPress={() => handleMarkAsTaken(schedule.id, schedule.nextDoses[0].toDate())}
+              style={[
+                styles.statusButton,
+                schedule.status === 'tomado' && styles.statusButtonTaken,
+                schedule.status === 'vencido' && styles.statusButtonLate
+              ]}
+              disabled={schedule.status === 'tomado'}
+            >
+              <Text style={styles.statusButtonText}>
+                {schedule.status === 'tomado' ? 'Tomado' :
+                  schedule.status === 'vencido' ? '¡Tomar ahora!' : 'Marcar'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        ))
+      )}
     </View>
   );
 }
 
+// Estilos actualizados
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: 16,
@@ -77,6 +144,23 @@ const styles = StyleSheet.create({
   },
   titleDark: {
     color: '#F9FAFB',
+  },
+  emptyCard: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  emptyCardDark: {
+    backgroundColor: '#374151',
+  },
+  emptyText: {
+    color: '#6B7280',
+    fontStyle: 'italic',
+  },
+  emptyTextDark: {
+    color: '#9CA3AF',
   },
   card: {
     flexDirection: 'row',
@@ -108,15 +192,25 @@ const styles = StyleSheet.create({
   timeDark: {
     color: '#D1D5DB',
   },
-  status: {
+  timeLate: {
+    color: '#EF4444',
+    fontWeight: 'bold',
+  },
+  statusButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    backgroundColor: '#22D3EE',
+  },
+  statusButtonTaken: {
+    backgroundColor: '#22C55E',
+  },
+  statusButtonLate: {
+    backgroundColor: '#EF4444',
+  },
+  statusButtonText: {
+    color: 'white',
     fontSize: 12,
-    fontFamily: 'Sansation-Bold',
-    textTransform: 'capitalize',
-  },
-  statusTaken: {
-    color: '#22C55E',
-  },
-  statusPending: {
-    color: '#FACC15',
+    fontWeight: 'bold',
   },
 });

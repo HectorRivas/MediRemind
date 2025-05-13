@@ -16,7 +16,8 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.hector_rivas.MediRemind"
     },
     "web": {
       "bundler": "metro",
@@ -24,6 +25,16 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#fff",
+          "sounds": [
+            "./assets/notification-sound.wav"
+          ]
+        }
+      ],
       "expo-router",
       [
         "expo-splash-screen",
@@ -37,6 +48,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "47f97f95-2c58-4889-ab12-49829e98c8d9"
+      }
     }
   }
 }

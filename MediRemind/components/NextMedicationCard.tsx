@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 import dayjs from 'dayjs';
 
@@ -7,25 +7,78 @@ declare global {
   var isDarkMode: boolean;
 }
 
-export default function NextMedicationCard() {
-  const [fill, setFill] = useState(0);
+interface MedicationSchedule {
+  id: string;
+  name: string;
+  dosage: string;
+  frequency: string;
+  startDate: Date;
+  takenTimes: Date[];
+}
 
-  const medicationHour = 22;
+interface NextMedicationCardProps {
+  schedule?: MedicationSchedule | null;
+}
+
+export default function NextMedicationCard({ schedule }: NextMedicationCardProps) {
+  const [fill, setFill] = useState(0);
+  const [nextTime, setNextTime] = useState({
+    time: '--:--',
+    period: '',
+    nextDose: null as dayjs.Dayjs | null
+  });
+  const intervalRef = useRef<number | null>(null);
+
+  const calculateNextDose = useCallback(() => {
+    if (!schedule) {
+      setNextTime({ time: '--:--', period: '', nextDose: null });
+      setFill(0);
+      return;
+    }
+
+    const now = dayjs();
+    const hoursInterval = parseInt(schedule.frequency.match(/\d+/)?.[0] ?? '8') || 8;
+    let nextDose = dayjs(schedule.startDate);
+
+    // Calcular próxima dosis no tomada
+    while (nextDose.isBefore(now)) {
+      const wasTaken = schedule.takenTimes.some(
+        t => dayjs(t).isSame(nextDose, 'hour')
+      );
+      if (!wasTaken) break;
+      nextDose = nextDose.add(hoursInterval, 'hour');
+    }
+
+    // Calcular dosis anterior para el progreso
+    let prevDose = nextDose.subtract(hoursInterval, 'hour');
+    if (prevDose.isBefore(dayjs(schedule.startDate))) {
+      prevDose = dayjs(schedule.startDate);
+    }
+
+    // Formatear hora
+    const displayHour = nextDose.hour() % 12 || 12;
+    const period = nextDose.hour() >= 12 ? 'PM' : 'AM';
+
+    setNextTime({
+      time: `${displayHour}:${nextDose.minute().toString().padStart(2, '0')}`,
+      period,
+      nextDose
+    });
+
+    // Calcular progreso
+    const totalMillis = nextDose.diff(prevDose);
+    const elapsedMillis = now.diff(prevDose);
+    const percent = (elapsedMillis / totalMillis) * 100;
+
+    setFill(Math.min(Math.max(percent, 0), 100));
+  }, [schedule]);
 
   useEffect(() => {
-    const updateFill = () => {
-      const now = dayjs();
-      const totalMinutes = medicationHour * 60;
-      const currentMinutes = now.hour() * 60 + now.minute();
-      const percent = Math.min((currentMinutes / totalMinutes) * 100, 100);
-      setFill(percent);
-    };
-
-    updateFill();
-    const interval = setInterval(updateFill, 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, []);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    calculateNextDose();
+    intervalRef.current = setInterval(calculateNextDose, 60000);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [calculateNextDose]);
 
   return (
     <View style={[styles.card, global.isDarkMode && { backgroundColor: '#1F2937' }]}>
@@ -39,28 +92,43 @@ export default function NextMedicationCard() {
           size={70}
           width={6}
           fill={fill}
-          tintColor="#22d3ee"
+          tintColor={fill >= 100 ? '#EF4444' : '#22d3ee'}
           backgroundColor="#e2e8f0"
           rotation={0}
           lineCap="round"
         >
           {() => (
             <View style={styles.progressContainer}>
-              <Text style={styles.timeText}>22:00</Text>
-              <Text style={[styles.amPmText, global.isDarkMode && { color: '#D1D5DB' }]}>PM</Text>
+              <Text style={[styles.timeText, fill >= 100 && styles.timeTextLate]}>
+                {nextTime.time}
+              </Text>
+              <Text style={[styles.amPmText, global.isDarkMode && { color: '#D1D5DB' }]}>
+                {nextTime.period}
+              </Text>
             </View>
           )}
         </AnimatedCircularProgress>
 
         <View style={styles.detailsContainer}>
           <Text style={[styles.medicationName, global.isDarkMode && { color: '#F9FAFB' }]}>
-            Paracetamol
+            {schedule?.name || 'No hay medicación'}
           </Text>
-          <Text style={[styles.dosage, global.isDarkMode && { color: '#D1D5DB' }]}>1 tableta</Text>
+          <Text style={[styles.dosage, global.isDarkMode && { color: '#D1D5DB' }]}>
+            {schedule?.dosage || 'Agrega un recordatorio'}
+          </Text>
 
           <View style={[styles.progressBarBackground, global.isDarkMode && { backgroundColor: '#374151' }]}>
-            <View style={[styles.progressBarFill, { width: `${fill}%` }]} />
+            <View style={[
+              styles.progressBarFill,
+              { width: `${fill}%` },
+              fill >= 100 && styles.progressBarFillLate
+            ]} />
           </View>
+          {schedule && (
+            <Text style={styles.frequencyText}>
+              Cada {schedule.frequency}
+            </Text>
+          )}
         </View>
       </View>
     </View>
@@ -106,6 +174,9 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#06b6d4',
   },
+  timeTextLate: {
+    color: '#EF4444', // Rojo cuando pasó la hora
+  },
   amPmText: {
     fontSize: 12,
     color: '#9CA3AF',
@@ -134,5 +205,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#22D3EE',
     borderRadius: 9999,
     height: '100%',
+  },
+  progressBarFillLate: {
+    backgroundColor: '#EF4444', // Rojo cuando pasó la hora
+  },
+  frequencyText: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
 });
