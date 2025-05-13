@@ -85,3 +85,5 @@ Este proyecto está bajo la licencia MIT.
 
 Desarrollado por [Hector Manuel Rivas Tejeda] - [hrivas549@gmail.com]
 En colaboración con [Juan Antonio Martínez Alba] - []
+
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/HectorRivas/MediRemind)
